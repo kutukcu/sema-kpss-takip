@@ -90,11 +90,11 @@
     image-rendering: crisp-edges;
   }
   @keyframes catWalk {
-    0%   { left: 0%;                   transform: scaleX(1); }
-    48%  { left: calc(100% - 32px);    transform: scaleX(1); }
-    50%  { left: calc(100% - 32px);    transform: scaleX(-1); }
-    98%  { left: 0%;                   transform: scaleX(-1); }
-    100% { left: 0%;                   transform: scaleX(1); }
+    0%   { left: 0%;                   transform: scaleX(-1); }
+    48%  { left: calc(100% - 32px);    transform: scaleX(-1); }
+    50%  { left: calc(100% - 32px);    transform: scaleX(1); }
+    98%  { left: 0%;                   transform: scaleX(1); }
+    100% { left: 0%;                   transform: scaleX(-1); }
   }
   @keyframes catBob {
     0%   { margin-bottom: 0; }
