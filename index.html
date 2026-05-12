@@ -7,23 +7,72 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
+  :root {
+    --bg: #f5f5f0;
+    --surface: #fff;
+    --surface-2: #fafaf8;
+    --surface-3: #f0f0eb;
+    --hover: #fafaf5;
+    --border: #e5e5e0;
+    --border-2: #ebebe5;
+    --border-3: #d5d5d0;
+    --text: #1a1a1a;
+    --text-2: #555;
+    --text-3: #666;
+    --text-muted: #888;
+    --text-faint: #999;
+    --accent: #378ADD;
+    --accent-bg: #e6f1fb;
+    --accent-text: #0C447C;
+    --success: #1d9e75;
+    --success-hover: #157858;
+    --success-bg: #f0f9f4;
+    --danger: #a32d2d;
+    --shadow: rgba(0,0,0,0.15);
+    --modal-bg: rgba(0,0,0,0.4);
+  }
+  [data-theme="dark"] {
+    --bg: #16161a;
+    --surface: #1f1f24;
+    --surface-2: #26262c;
+    --surface-3: #2d2d34;
+    --hover: #2a2a30;
+    --border: #2e2e36;
+    --border-2: #33333c;
+    --border-3: #3d3d47;
+    --text: #ececec;
+    --text-2: #b8b8b8;
+    --text-3: #a0a0a0;
+    --text-muted: #8a8a8a;
+    --text-faint: #6e6e6e;
+    --accent: #5ba3e8;
+    --accent-bg: #1c3349;
+    --accent-text: #a8d0f0;
+    --success: #2cb589;
+    --success-hover: #239e76;
+    --success-bg: #1a2e26;
+    --danger: #e07070;
+    --shadow: rgba(0,0,0,0.4);
+    --modal-bg: rgba(0,0,0,0.6);
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: #f5f5f0;
-    color: #1a1a1a;
+    background: var(--bg);
+    color: var(--text);
     line-height: 1.5;
     padding: 16px;
     max-width: 900px;
     margin: 0 auto;
+    transition: background 0.2s, color 0.2s;
   }
   header {
     text-align: center;
     margin-bottom: 24px;
     padding: 20px 16px;
-    background: #fff;
+    background: var(--surface);
     border-radius: 12px;
-    border: 1px solid #e5e5e0;
+    border: 1px solid var(--border);
   }
   h1 {
     font-size: 22px;
@@ -32,7 +81,7 @@
   }
   .mini-title {
     font-size: 12px;
-    color: #888;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 1.5px;
     margin-bottom: 6px;
@@ -40,11 +89,11 @@
   }
   .subtitle {
     font-size: 13px;
-    color: #666;
+    color: var(--text-3);
   }
   .overall-percent {
     font-weight: 700;
-    color: #1a1a1a;
+    color: var(--text);
     font-size: 15px;
   }
   .overall-progress {
@@ -52,21 +101,21 @@
   }
   .overall-bar {
     height: 8px;
-    background: #ebebe5;
+    background: var(--border-2);
     border-radius: 4px;
     overflow: hidden;
     margin-top: 8px;
   }
   .overall-fill {
     height: 100%;
-    background: linear-gradient(90deg, #1d9e75, #378ADD);
+    background: linear-gradient(90deg, var(--success), var(--accent));
     transition: width 0.4s ease;
   }
   .overall-stats {
     display: flex;
     justify-content: space-between;
     font-size: 13px;
-    color: #666;
+    color: var(--text-3);
     margin-top: 6px;
   }
   .controls {
@@ -75,32 +124,67 @@
     margin-bottom: 16px;
     flex-wrap: wrap;
   }
+  .bottom-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 32px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    align-items: center;
+  }
   .btn {
     padding: 8px 14px;
     font-size: 13px;
-    background: #fff;
-    border: 1px solid #d5d5d0;
+    background: var(--surface);
+    border: 1px solid var(--border-3);
     border-radius: 8px;
     cursor: pointer;
     font-family: inherit;
-    color: #1a1a1a;
+    color: var(--text);
     transition: all 0.15s;
   }
-  .btn:hover { background: #f0f0eb; }
+  .btn:hover { background: var(--hover); }
   .btn-primary {
-    background: #1a1a1a;
-    color: #fff;
-    border-color: #1a1a1a;
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
   }
-  .btn-primary:hover { background: #333; }
+  .btn-primary:hover { opacity: 0.85; }
   .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .theme-switch {
+    display: inline-flex;
+    background: var(--surface);
+    border: 1px solid var(--border-3);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .theme-switch button {
+    background: transparent;
+    border: none;
+    padding: 7px 11px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--text-3);
+    font-family: inherit;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .theme-switch button:hover { background: var(--hover); }
+  .theme-switch button.active {
+    background: var(--accent-bg);
+    color: var(--accent-text);
+  }
   .toast {
     position: fixed;
     bottom: 24px;
     left: 50%;
     transform: translateX(-50%) translateY(20px);
-    background: #1a1a1a;
-    color: #fff;
+    background: var(--text);
+    color: var(--bg);
     padding: 10px 18px;
     border-radius: 24px;
     font-size: 13px;
@@ -109,7 +193,7 @@
     pointer-events: none;
     transition: opacity 0.25s ease, transform 0.25s ease;
     z-index: 150;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 16px var(--shadow);
     max-width: calc(100% - 32px);
     text-align: center;
   }
@@ -117,11 +201,11 @@
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
-  .toast.success { background: #1d9e75; }
-  .toast.error { background: #a32d2d; }
+  .toast.success { background: var(--success); color: #fff; }
+  .toast.error { background: var(--danger); color: #fff; }
   .ders {
-    background: #fff;
-    border: 1px solid #e5e5e0;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 12px;
     margin-bottom: 12px;
     overflow: hidden;
@@ -134,10 +218,10 @@
     gap: 12px;
     user-select: none;
   }
-  .ders-header:hover { background: #fafaf5; }
+  .ders-header:hover { background: var(--hover); }
   .chevron {
     font-size: 12px;
-    color: #888;
+    color: var(--text-muted);
     transition: transform 0.2s;
     width: 12px;
   }
@@ -149,8 +233,8 @@
   }
   .ders-count {
     font-size: 12px;
-    color: #666;
-    background: #f0f0eb;
+    color: var(--text-3);
+    background: var(--surface-3);
     padding: 3px 8px;
     border-radius: 10px;
   }
@@ -163,48 +247,48 @@
   .ders-bar {
     flex: 1;
     height: 6px;
-    background: #ebebe5;
+    background: var(--border-2);
     border-radius: 3px;
     overflow: hidden;
   }
   .ders-fill {
     height: 100%;
-    background: #378ADD;
+    background: var(--accent);
     transition: width 0.3s;
   }
   .ders-percent {
     font-size: 12px;
     font-weight: 600;
-    color: #555;
+    color: var(--text-2);
     min-width: 32px;
     text-align: right;
   }
-  .ders.complete .ders-fill { background: #1d9e75; }
+  .ders.complete .ders-fill { background: var(--success); }
   .ders-body {
     display: none;
-    border-top: 1px solid #ebebe5;
-    background: #fafaf8;
+    border-top: 1px solid var(--border-2);
+    background: var(--surface-2);
   }
   .ders.open .ders-body { display: block; }
   .konu {
     padding: 12px 16px;
-    border-bottom: 1px solid #ebebe5;
+    border-bottom: 1px solid var(--border-2);
     display: flex;
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
   }
   .konu:last-child { border-bottom: none; }
-  .konu.completed { background: #f0f9f4; }
+  .konu.completed { background: var(--success-bg); }
   .konu-name {
     flex: 1;
     min-width: 180px;
     font-size: 14px;
-    color: #1a1a1a;
+    color: var(--text);
   }
   .konu.completed .konu-name {
     text-decoration: line-through;
-    color: #555;
+    color: var(--text-2);
   }
   .checkboxes {
     display: flex;
@@ -216,20 +300,20 @@
     align-items: center;
     gap: 5px;
     padding: 4px 10px;
-    background: #fff;
-    border: 1px solid #d5d5d0;
+    background: var(--surface);
+    border: 1px solid var(--border-3);
     border-radius: 14px;
     font-size: 11px;
     cursor: pointer;
     user-select: none;
     transition: all 0.15s;
-    color: #555;
+    color: var(--text-2);
   }
-  .check-pill:hover { border-color: #aaa; }
+  .check-pill:hover { border-color: var(--text-muted); }
   .check-pill.checked {
-    background: #e6f1fb;
-    border-color: #378ADD;
-    color: #0C447C;
+    background: var(--accent-bg);
+    border-color: var(--accent);
+    color: var(--accent-text);
   }
   .check-pill .ico { font-weight: 700; font-size: 12px; }
   .complete-btn {
@@ -237,27 +321,27 @@
     align-items: center;
     gap: 5px;
     padding: 4px 12px;
-    background: #ebebe5;
-    border: 1px solid #d5d5d0;
+    background: var(--surface-3);
+    border: 1px solid var(--border-3);
     border-radius: 14px;
     font-size: 11px;
-    color: #999;
+    color: var(--text-faint);
     cursor: not-allowed;
     font-family: inherit;
     transition: all 0.15s;
   }
   .complete-btn .ico { font-weight: 700; font-size: 12px; }
   .complete-btn.ready {
-    background: #1d9e75;
-    border-color: #1d9e75;
+    background: var(--success);
+    border-color: var(--success);
     color: #fff;
     cursor: pointer;
   }
-  .complete-btn.ready:hover { background: #157858; }
+  .complete-btn.ready:hover { background: var(--success-hover); }
   .complete-btn.done {
-    background: #f0f0eb;
-    border-color: #d5d5d0;
-    color: #1d9e75;
+    background: var(--surface-3);
+    border-color: var(--border-3);
+    color: var(--success);
     cursor: pointer;
   }
   .konu-actions {
@@ -268,13 +352,13 @@
   .icon-btn {
     background: transparent;
     border: none;
-    color: #999;
+    color: var(--text-faint);
     cursor: pointer;
     padding: 4px 6px;
     font-size: 12px;
     border-radius: 4px;
   }
-  .icon-btn:hover { background: #ebebe5; color: #555; }
+  .icon-btn:hover { background: var(--border-2); color: var(--text-2); }
   .add-konu {
     padding: 10px 16px;
     display: flex;
@@ -283,22 +367,24 @@
   .add-konu input {
     flex: 1;
     padding: 6px 10px;
-    border: 1px solid #d5d5d0;
+    border: 1px solid var(--border-3);
     border-radius: 6px;
     font-family: inherit;
     font-size: 13px;
+    background: var(--surface);
+    color: var(--text);
   }
   .ders-footer {
     padding: 10px 16px;
     display: flex;
     gap: 6px;
     justify-content: flex-end;
-    border-top: 1px solid #ebebe5;
+    border-top: 1px solid var(--border-2);
   }
   .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.4);
+    background: var(--modal-bg);
     display: none;
     align-items: center;
     justify-content: center;
@@ -307,31 +393,36 @@
   }
   .modal-overlay.show { display: flex; }
   .modal {
-    background: #fff;
+    background: var(--surface);
     border-radius: 12px;
     padding: 20px;
     max-width: 400px;
     width: 100%;
+    border: 1px solid var(--border);
   }
   .modal h3 { margin-bottom: 12px; font-size: 16px; }
-  .modal p { font-size: 13px; color: #555; margin-bottom: 16px; }
+  .modal p { font-size: 13px; color: var(--text-2); margin-bottom: 16px; }
   .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .modal select, .modal input[type="text"] {
+    background: var(--surface);
+    color: var(--text);
+  }
   .footer-note {
     text-align: center;
     font-size: 12px;
-    color: #888;
+    color: var(--text-muted);
     margin-top: 20px;
     padding: 12px;
   }
   .loading {
     text-align: center;
     padding: 40px;
-    color: #888;
+    color: var(--text-muted);
   }
   .lock-screen {
     position: fixed;
     inset: 0;
-    background: #f5f5f0;
+    background: var(--bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -339,8 +430,8 @@
     padding: 24px;
   }
   .lock-box {
-    background: #fff;
-    border: 1px solid #e5e5e0;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 32px 24px;
     max-width: 340px;
@@ -358,7 +449,7 @@
   }
   .lock-subtitle {
     font-size: 13px;
-    color: #666;
+    color: var(--text-3);
     margin-bottom: 20px;
   }
   .pin-input {
@@ -367,19 +458,20 @@
     font-size: 22px;
     text-align: center;
     letter-spacing: 12px;
-    border: 1px solid #d5d5d0;
+    border: 1px solid var(--border-3);
     border-radius: 10px;
     font-family: inherit;
-    background: #fafaf8;
+    background: var(--surface-2);
+    color: var(--text);
     outline: none;
     -webkit-text-security: disc;
   }
   .pin-input:focus {
-    border-color: #378ADD;
-    background: #fff;
+    border-color: var(--accent);
+    background: var(--surface);
   }
   .pin-error {
-    color: #a32d2d;
+    color: var(--danger);
     font-size: 13px;
     margin-top: 12px;
     min-height: 18px;
@@ -388,8 +480,8 @@
     margin-top: 16px;
     width: 100%;
     padding: 12px;
-    background: #1a1a1a;
-    color: #fff;
+    background: var(--text);
+    color: var(--bg);
     border: none;
     border-radius: 10px;
     font-size: 15px;
@@ -397,15 +489,30 @@
     cursor: pointer;
     font-family: inherit;
   }
-  .lock-btn:hover { background: #333; }
+  .lock-btn:hover { opacity: 0.85; }
   .app-content { display: none; }
   .app-content.unlocked { display: block; }
   @media (max-width: 600px) {
     .ders-progress { min-width: 80px; }
     .konu-name { min-width: 100%; }
     .ders-name { font-size: 14px; }
+    .bottom-controls { flex-direction: column; align-items: stretch; }
+    .bottom-controls .btn { width: 100%; }
+    .theme-switch { width: 100%; justify-content: center; }
+    .theme-switch button { flex: 1; justify-content: center; }
   }
 </style>
+<script>
+  // Tema'yı render'dan önce uygula ki flash olmasın
+  (function() {
+    const saved = localStorage.getItem('kpss-theme') || 'system';
+    let applied = saved;
+    if (saved === 'system') {
+      applied = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', applied);
+  })();
+</script>
 </head>
 <body>
 
@@ -433,7 +540,7 @@
 
 <header>
   <div class="mini-title">Sema Aktaş</div>
-  <h1>KPSS İlerleyiş Takibi</h1>
+  <h1>📚 KPSS İlerleyiş Takibi</h1>
   <div class="overall-progress">
     <div class="overall-bar"><div class="overall-fill" id="overallFill" style="width:0%"></div></div>
     <div class="overall-stats">
@@ -443,15 +550,20 @@
   </div>
 </header>
 
-<div class="controls">
+<div id="dersList" class="loading">Yükleniyor...</div>
+
+<div class="bottom-controls">
   <button class="btn" onclick="openAddKonuModal()">+ Konu Ekle</button>
   <button class="btn" onclick="exportData()">📥 Yedek Al</button>
   <button class="btn" onclick="document.getElementById('importFile').click()">📤 Yedeği Yükle</button>
   <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-  <button class="btn" onclick="confirmReset()" style="margin-left:auto; color:#a32d2d">Sıfırla</button>
+  <div class="theme-switch" role="group" aria-label="Tema seçimi" style="margin-left:auto">
+    <button data-theme-choice="light" onclick="setTheme('light')" title="Açık tema">☀️</button>
+    <button data-theme-choice="system" onclick="setTheme('system')" title="Sistem teması">💻</button>
+    <button data-theme-choice="dark" onclick="setTheme('dark')" title="Koyu tema">🌙</button>
+  </div>
+  <button class="btn" onclick="confirmReset()" style="color:var(--danger)">Sıfırla</button>
 </div>
-
-<div id="dersList" class="loading">Yükleniyor...</div>
 
 <div class="footer-note">
   💑 Bu sayfayı ikiniz de aynı linkten açabilirsiniz. Tüm değişiklikler otomatik kaydedilir.
@@ -460,10 +572,10 @@
 <div class="modal-overlay" id="addKonuModal">
   <div class="modal">
     <h3>Yeni Konu Ekle</h3>
-    <label style="font-size:13px; color:#555; display:block; margin-bottom:6px;">Ders</label>
-    <select id="addKonuDersSelect" style="width:100%; padding:10px; border:1px solid #d5d5d0; border-radius:8px; font-family:inherit; font-size:14px; background:#fff; margin-bottom:12px;"></select>
-    <label style="font-size:13px; color:#555; display:block; margin-bottom:6px;">Konu adı</label>
-    <input type="text" id="addKonuInput" placeholder="Konunun adı..." onkeydown="if(event.key==='Enter')submitAddKonu()" style="width:100%; padding:10px; border:1px solid #d5d5d0; border-radius:8px; font-family:inherit; font-size:14px; margin-bottom:16px;">
+    <label style="font-size:13px; color:var(--text-2); display:block; margin-bottom:6px;">Ders</label>
+    <select id="addKonuDersSelect" style="width:100%; padding:10px; border:1px solid var(--border-3); border-radius:8px; font-family:inherit; font-size:14px; background:var(--surface); color:var(--text); margin-bottom:12px;"></select>
+    <label style="font-size:13px; color:var(--text-2); display:block; margin-bottom:6px;">Konu adı</label>
+    <input type="text" id="addKonuInput" placeholder="Konunun adı..." onkeydown="if(event.key==='Enter')submitAddKonu()" style="width:100%; padding:10px; border:1px solid var(--border-3); border-radius:8px; font-family:inherit; font-size:14px; background:var(--surface); color:var(--text); margin-bottom:16px;">
     <div class="modal-actions">
       <button class="btn" onclick="closeAddKonuModal()">Vazgeç</button>
       <button class="btn btn-primary" onclick="submitAddKonu()">Ekle</button>
@@ -477,7 +589,7 @@
     <p>Tüm işaretler silinecek ve müfredat varsayılana dönecek. Bu işlem geri alınamaz.</p>
     <div class="modal-actions">
       <button class="btn" onclick="closeModal()">Vazgeç</button>
-      <button class="btn btn-primary" onclick="doReset()" style="background:#a32d2d; border-color:#a32d2d">Sıfırla</button>
+      <button class="btn btn-primary" onclick="doReset()" style="background:var(--danger); border-color:var(--danger); color:#fff">Sıfırla</button>
     </div>
   </div>
 </div>
@@ -839,7 +951,7 @@ function render() {
   list.classList.remove('loading');
 
   if (!state.dersler.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:#888;background:#fff;border-radius:12px;">Henüz konu yok.</div>';
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);background:var(--surface);border-radius:12px;">Henüz konu yok.</div>';
     return;
   }
 
@@ -863,7 +975,7 @@ function render() {
           ${ders.konular.map(k => renderKonu(ders.id, k)).join('')}
           <div class="ders-footer">
             <button class="btn btn-sm" onclick="renameDers('${ders.id}')" title="Dersi yeniden adlandır">✏️ Yeniden adlandır</button>
-            <button class="btn btn-sm" onclick="deleteDers('${ders.id}')" title="Dersi sil" style="color:#a32d2d">🗑 Dersi sil</button>
+            <button class="btn btn-sm" onclick="deleteDers('${ders.id}')" title="Dersi sil" style="color:var(--danger)">🗑 Dersi sil</button>
           </div>
         </div>
       </div>
@@ -1011,6 +1123,33 @@ function startListening() {
   });
 }
 
+// ============ TEMA ============
+function setTheme(choice) {
+  localStorage.setItem('kpss-theme', choice);
+  let applied = choice;
+  if (choice === 'system') {
+    applied = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  document.documentElement.setAttribute('data-theme', applied);
+  updateThemeButtons();
+}
+
+function updateThemeButtons() {
+  const current = localStorage.getItem('kpss-theme') || 'system';
+  document.querySelectorAll('[data-theme-choice]').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-theme-choice') === current);
+  });
+}
+
+// Sistem teması değişirse otomatik takip et
+if (window.matchMedia) {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    if ((localStorage.getItem('kpss-theme') || 'system') === 'system') {
+      document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+    }
+  });
+}
+
 // ============ PIN ============
 const CORRECT_PIN = '7362';
 
@@ -1031,6 +1170,7 @@ function checkPin() {
 
 // ============ INIT ============
 async function initApp() {
+  updateThemeButtons();
   await loadState();
   render();
   startListening();
