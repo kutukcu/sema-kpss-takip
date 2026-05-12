@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KPSS İlerleyiş Takibi</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f5f5f0;
+    color: #1a1a1a;
+    line-height: 1.5;
+    padding: 16px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding: 20px 16px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e5e5e0;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: #666;
+  }
+  .overall-progress {
+    margin-top: 16px;
+  }
+  .overall-bar {
+    height: 8px;
+    background: #ebebe5;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .overall-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1d9e75, #378ADD);
+    transition: width 0.4s ease;
+  }
+  .overall-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #666;
+    margin-top: 6px;
+  }
+  .controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 8px 14px;
+    font-size: 13px;
+    background: #fff;
+    border: 1px solid #d5d5d0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    color: #1a1a1a;
+    transition: all 0.15s;
+  }
+  .btn:hover { background: #f0f0eb; }
+  .btn-primary {
+    background: #1a1a1a;
+    color: #fff;
+    border-color: #1a1a1a;
+  }
+  .btn-primary:hover { background: #333; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .status-banner {
+    background: #fff8e1;
+    border: 1px solid #f0d97a;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #6d5210;
+    display: none;
+  }
+  .status-banner.show { display: block; }
+  .ders {
+    background: #fff;
+    border: 1px solid #e5e5e0;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .ders-header {
+    padding: 14px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    user-select: none;
+  }
+  .ders-header:hover { background: #fafaf5; }
+  .chevron {
+    font-size: 12px;
+    color: #888;
+    transition: transform 0.2s;
+    width: 12px;
+  }
+  .ders.open .chevron { transform: rotate(90deg); }
+  .ders-name {
+    font-weight: 600;
+    font-size: 15px;
+    flex: 1;
+  }
+  .ders-count {
+    font-size: 12px;
+    color: #666;
+    background: #f0f0eb;
+    padding: 3px 8px;
+    border-radius: 10px;
+  }
+  .ders-progress {
+    min-width: 120px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ders-bar {
+    flex: 1;
+    height: 6px;
+    background: #ebebe5;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .ders-fill {
+    height: 100%;
+    background: #378ADD;
+    transition: width 0.3s;
+  }
+  .ders-percent {
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    min-width: 32px;
+    text-align: right;
+  }
+  .ders.complete .ders-fill { background: #1d9e75; }
+  .ders-body {
+    display: none;
+    border-top: 1px solid #ebebe5;
+    background: #fafaf8;
+  }
+  .ders.open .ders-body { display: block; }
+  .konu {
+    padding: 12px 16px;
+    border-bottom: 1px solid #ebebe5;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .konu:last-child { border-bottom: none; }
+  .konu.completed { background: #f0f9f4; }
+  .konu-name {
+    flex: 1;
+    min-width: 180px;
+    font-size: 14px;
+    color: #1a1a1a;
+  }
+  .konu.completed .konu-name {
+    text-decoration: line-through;
+    color: #555;
+  }
+  .checkboxes {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .check-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: #fff;
+    border: 1px solid #d5d5d0;
+    border-radius: 14px;
+    font-size: 11px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s;
+    color: #555;
+  }
+  .check-pill:hover { border-color: #aaa; }
+  .check-pill.checked {
+    background: #e6f1fb;
+    border-color: #378ADD;
+    color: #0C447C;
+  }
+  .check-pill .ico { font-weight: 700; font-size: 12px; }
+  .complete-btn {
+    padding: 5px 12px;
+    background: #ebebe5;
+    border: 1px solid #d5d5d0;
+    border-radius: 14px;
+    font-size: 11px;
+    color: #999;
+    cursor: not-allowed;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .complete-btn.ready {
+    background: #1d9e75;
+    border-color: #1d9e75;
+    color: #fff;
+    cursor: pointer;
+  }
+  .complete-btn.ready:hover { background: #157858; }
+  .complete-btn.done {
+    background: #f0f0eb;
+    border-color: #d5d5d0;
+    color: #1d9e75;
+    cursor: pointer;
+  }
+  .konu-actions {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+  }
+  .icon-btn {
+    background: transparent;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 4px 6px;
+    font-size: 12px;
+    border-radius: 4px;
+  }
+  .icon-btn:hover { background: #ebebe5; color: #555; }
+  .add-konu {
+    padding: 10px 16px;
+    display: flex;
+    gap: 6px;
+  }
+  .add-konu input {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid #d5d5d0;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+  }
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 400px;
+    width: 100%;
+  }
+  .modal h3 { margin-bottom: 12px; font-size: 16px; }
+  .modal p { font-size: 13px; color: #555; margin-bottom: 16px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .footer-note {
+    text-align: center;
+    font-size: 12px;
+    color: #888;
+    margin-top: 20px;
+    padding: 12px;
+  }
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+  }
+  .lock-screen {
+    position: fixed;
+    inset: 0;
+    background: #f5f5f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 24px;
+  }
+  .lock-box {
+    background: #fff;
+    border: 1px solid #e5e5e0;
+    border-radius: 16px;
+    padding: 32px 24px;
+    max-width: 340px;
+    width: 100%;
+    text-align: center;
+  }
+  .lock-icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+  }
+  .lock-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .lock-subtitle {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 20px;
+  }
+  .pin-input {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 22px;
+    text-align: center;
+    letter-spacing: 12px;
+    border: 1px solid #d5d5d0;
+    border-radius: 10px;
+    font-family: inherit;
+    background: #fafaf8;
+    outline: none;
+    -webkit-text-security: disc;
+  }
+  .pin-input:focus {
+    border-color: #378ADD;
+    background: #fff;
+  }
+  .pin-error {
+    color: #a32d2d;
+    font-size: 13px;
+    margin-top: 12px;
+    min-height: 18px;
+  }
+  .lock-btn {
+    margin-top: 16px;
+    width: 100%;
+    padding: 12px;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .lock-btn:hover { background: #333; }
+  .app-content { display: none; }
+  .app-content.unlocked { display: block; }
+  @media (max-width: 600px) {
+    .ders-progress { min-width: 80px; }
+    .konu-name { min-width: 100%; }
+    .ders-name { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-box">
+    <div class="lock-icon">🔒</div>
+    <div class="lock-title">KPSS Takip</div>
+    <div class="lock-subtitle">Devam etmek için şifreyi gir</div>
+    <input
+      type="password"
+      class="pin-input"
+      id="pinInput"
+      inputmode="numeric"
+      pattern="[0-9]*"
+      maxlength="4"
+      autocomplete="off"
+      placeholder="••••"
+    >
+    <div class="pin-error" id="pinError"></div>
+    <button class="lock-btn" onclick="checkPin()">Giriş</button>
+  </div>
+</div>
+
+<div class="app-content" id="appContent">
+
+<header>
+  <h1>📚 KPSS Genel Yetenek - Genel Kültür</h1>
+  <div class="overall-progress">
+    <div class="overall-bar"><div class="overall-fill" id="overallFill" style="width:0%"></div></div>
+    <div class="overall-stats">
+      <span id="overallText">0 / 0 konu tamamlandı</span>
+      <span id="overallPercent">%0</span>
+    </div>
+  </div>
+</header>
+
+<div class="status-banner" id="statusBanner"></div>
+
+<div class="controls">
+  <button class="btn" onclick="expandAll()">Hepsini Aç</button>
+  <button class="btn" onclick="collapseAll()">Hepsini Kapat</button>
+  <button class="btn" onclick="addDers()">+ Ders Ekle</button>
+  <button class="btn" onclick="exportData()">📥 Yedek Al</button>
+  <button class="btn" onclick="confirmReset()" style="margin-left:auto; color:#a32d2d">Sıfırla</button>
+</div>
+
+<div id="dersList" class="loading">Yükleniyor...</div>
+
+<div class="footer-note">
+  💑 Bu sayfayı ikiniz de aynı linkten açabilirsiniz. Tüm değişiklikler otomatik kaydedilir.
+</div>
+
+<div class="modal-overlay" id="resetModal">
+  <div class="modal">
+    <h3>Tüm ilerleyişi sıfırlamak istediğine emin misin?</h3>
+    <p>Tüm işaretler silinecek ve müfredat varsayılana dönecek. Bu işlem geri alınamaz.</p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Vazgeç</button>
+      <button class="btn btn-primary" onclick="doReset()" style="background:#a32d2d; border-color:#a32d2d">Sıfırla</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app-content -->
+
+<script>
+// ============ FIREBASE INIT ============
+const firebaseConfig = {
+  apiKey: "AIzaSyCCaE2vrm_7JrfrWqBlsQfGrYN6pNs1o_I",
+  authDomain: "kpss-takip-f31d1.firebaseapp.com",
+  projectId: "kpss-takip-f31d1",
+  storageBucket: "kpss-takip-f31d1.firebasestorage.app",
+  messagingSenderId: "729220744571",
+  appId: "1:729220744571:web:d95e2d7e04169afee3a9de"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const DOC_REF = db.collection('tracker').doc('shared');
+
+const DEFAULT_DATA = {
+  dersler: [
+    { id: 'turkce', name: 'Türkçe', konular: [
+      'Sözcükte Anlam',
+      'Cümlede Anlam',
+      'Paragrafta Anlam',
+      'Ses Bilgisi',
+      'Yazım Kuralları',
+      'Noktalama İşaretleri',
+      'Sözcükte Yapı',
+      'Sözcük Türleri (İsim, Sıfat, Zamir)',
+      'Sözcük Türleri (Zarf, Edat, Bağlaç, Ünlem)',
+      'Fiiller ve Fiilimsiler',
+      'Cümlenin Ögeleri',
+      'Cümle Türleri',
+      'Anlatım Bozuklukları'
+    ]},
+    { id: 'matematik', name: 'Matematik', konular: [
+      'Temel Kavramlar',
+      'Sayı Basamakları',
+      'Bölme ve Bölünebilme',
+      'OBEB - OKEK',
+      'Rasyonel Sayılar',
+      'Basit Eşitsizlikler',
+      'Mutlak Değer',
+      'Üslü Sayılar',
+      'Köklü Sayılar',
+      'Çarpanlara Ayırma',
+      'Oran Orantı',
+      'Denklem Çözme',
+      'Problemler (Sayı, Kesir)',
+      'Problemler (Yaş, Yüzde, Kâr-Zarar)',
+      'Problemler (Hareket, İşçi, Karışım)',
+      'Kümeler',
+      'Fonksiyonlar',
+      'Permütasyon - Kombinasyon - Olasılık',
+      'İstatistik',
+      'Sayısal Mantık'
+    ]},
+    { id: 'geometri', name: 'Geometri', konular: [
+      'Doğruda ve Üçgende Açılar',
+      'Üçgende Kenar Bağıntıları',
+      'Dik ve Özel Üçgenler',
+      'İkizkenar ve Eşkenar Üçgen',
+      'Üçgende Açıortay-Kenarortay',
+      'Üçgende Benzerlik',
+      'Çokgenler',
+      'Dörtgenler',
+      'Çember ve Daire',
+      'Katı Cisimler',
+      'Analitik Geometri'
+    ]},
+    { id: 'tarih', name: 'Tarih', konular: [
+      'İslamiyet Öncesi Türk Tarihi',
+      'İlk Türk-İslam Devletleri',
+      'Türkiye Selçuklu Devleti',
+      'Beylikten Devlete (Osmanlı Kuruluş)',
+      'Osmanlı Yükselme Dönemi',
+      'Osmanlı Duraklama Dönemi',
+      'Osmanlı Gerileme Dönemi',
+      'Osmanlı Dağılma Dönemi',
+      'Osmanlı Kültür ve Medeniyeti',
+      '20. Yüzyıl Başlarında Osmanlı',
+      'I. Dünya Savaşı',
+      'Mondros ve İşgaller',
+      'Kurtuluş Savaşı Hazırlık Dönemi',
+      'I. ve II. TBMM Dönemi',
+      'Kurtuluş Savaşı Muharebeleri',
+      'Lozan ve Sonrası',
+      'Atatürk İlke ve İnkılapları',
+      'Atatürk Dönemi İç ve Dış Politika',
+      'Çağdaş Türk ve Dünya Tarihi'
+    ]},
+    { id: 'cografya', name: 'Coğrafya', konular: [
+      "Türkiye'nin Coğrafi Konumu",
+      "Türkiye'nin Yer Şekilleri",
+      "Türkiye'nin İklimi ve Bitki Örtüsü",
+      "Türkiye'de Nüfus ve Yerleşme",
+      "Türkiye'de Tarım, Hayvancılık, Ormancılık",
+      "Türkiye'de Madenler ve Enerji Kaynakları",
+      "Türkiye'de Sanayi",
+      "Türkiye'de Ulaşım, Ticaret, Turizm",
+      "Türkiye'nin Bölgesel Coğrafyası",
+      "Türkiye ve Dünya Sorunları"
+    ]},
+    { id: 'vatandaslik', name: 'Vatandaşlık', konular: [
+      'Hukukun Temel Kavramları',
+      'Devlet Şekilleri ve Demokrasi',
+      'Anayasa Hukuku - Temel Hak ve Hürriyetler',
+      'Yasama (TBMM)',
+      'Yürütme (Cumhurbaşkanı ve Bakanlar)',
+      'Yargı',
+      'İdare Hukuku',
+      'Uluslararası Kuruluşlar',
+      'Güncel Bilgiler'
+    ]},
+    { id: 'guncel', name: 'Güncel Bilgiler', konular: [
+      'Son 1 Yılın Olayları',
+      'Uluslararası Anlaşmalar ve Zirveler',
+      'Atamalar ve Görev Değişiklikleri',
+      'Spor Olayları',
+      'Bilim ve Teknoloji Gelişmeleri',
+      'Kültür-Sanat ve Ödüller'
+    ]}
+  ],
+  // her konu için { dersDinlendi, soruCozuldu, yanlisIncelendi, tamamlandi }
+  progress: {}
+};
+
+let state = null;
+let saving = false;
+let saveTimer = null;
+let unsubscribe = null;
+let lastSavedHash = '';
+
+// ============ STORAGE (Firebase Firestore) ============
+async function loadState() {
+  try {
+    const snap = await DOC_REF.get();
+    if (snap.exists) {
+      state = snap.data();
+      mergeDefaults();
+    } else {
+      state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      await DOC_REF.set(state);
+    }
+    lastSavedHash = JSON.stringify(state);
+  } catch (e) {
+    showStatus('⚠ Bağlantı hatası: ' + e.message, 4000);
+    state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  }
+}
+
+function mergeDefaults() {
+  if (!state.progress) state.progress = {};
+  if (!state.dersler) state.dersler = DEFAULT_DATA.dersler;
+}
+
+async function saveState() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    saving = true;
+    showStatus('Kaydediliyor...');
+    try {
+      await DOC_REF.set(state);
+      lastSavedHash = JSON.stringify(state);
+      showStatus('✓ Kaydedildi', 1500);
+    } catch (e) {
+      showStatus('⚠ Kayıt hatası: ' + e.message, 3000);
+    }
+    saving = false;
+  }, 300);
+}
+
+function showStatus(msg, duration = 0) {
+  const banner = document.getElementById('statusBanner');
+  banner.textContent = msg;
+  banner.classList.add('show');
+  if (duration) {
+    setTimeout(() => banner.classList.remove('show'), duration);
+  }
+}
+
+// ============ PROGRESS LOGIC ============
+function getKonuProgress(dersId, konuName) {
+  const key = dersId + '::' + konuName;
+  return state.progress[key] || {
+    dersDinlendi: false,
+    soruCozuldu: false,
+    yanlisIncelendi: false,
+    tamamlandi: false
+  };
+}
+
+function setKonuProgress(dersId, konuName, prog) {
+  const key = dersId + '::' + konuName;
+  state.progress[key] = prog;
+}
+
+function toggleCheck(dersId, konuName, field) {
+  const p = getKonuProgress(dersId, konuName);
+  p[field] = !p[field];
+  // Eğer tamamlanmışsa ve geri açıyorsa, tamamlandıyı da kaldır
+  if (p.tamamlandi && !(p.dersDinlendi && p.soruCozuldu && p.yanlisIncelendi)) {
+    p.tamamlandi = false;
+  }
+  setKonuProgress(dersId, konuName, p);
+  saveState();
+  render();
+}
+
+function toggleComplete(dersId, konuName) {
+  const p = getKonuProgress(dersId, konuName);
+  if (p.tamamlandi) {
+    p.tamamlandi = false;
+  } else if (p.dersDinlendi && p.soruCozuldu && p.yanlisIncelendi) {
+    p.tamamlandi = true;
+  }
+  setKonuProgress(dersId, konuName, p);
+  saveState();
+  render();
+}
+
+function getDersStats(ders) {
+  const total = ders.konular.length;
+  let completed = 0;
+  for (const k of ders.konular) {
+    if (getKonuProgress(ders.id, k).tamamlandi) completed++;
+  }
+  return { total, completed, percent: total ? Math.round((completed/total)*100) : 0 };
+}
+
+function getOverallStats() {
+  let total = 0, completed = 0;
+  for (const ders of state.dersler) {
+    const s = getDersStats(ders);
+    total += s.total;
+    completed += s.completed;
+  }
+  return { total, completed, percent: total ? Math.round((completed/total)*100) : 0 };
+}
+
+// ============ DERS / KONU YÖNETİMİ ============
+function addDers() {
+  const name = prompt('Yeni dersin adı:');
+  if (!name || !name.trim()) return;
+  const id = 'custom_' + Date.now();
+  state.dersler.push({ id, name: name.trim(), konular: [] });
+  saveState();
+  render();
+}
+
+function deleteDers(dersId) {
+  if (!confirm('Bu dersi ve tüm konularını silmek istediğine emin misin?')) return;
+  state.dersler = state.dersler.filter(d => d.id !== dersId);
+  // progress'ten de temizle
+  for (const k of Object.keys(state.progress)) {
+    if (k.startsWith(dersId + '::')) delete state.progress[k];
+  }
+  saveState();
+  render();
+}
+
+function renameDers(dersId) {
+  const ders = state.dersler.find(d => d.id === dersId);
+  if (!ders) return;
+  const newName = prompt('Dersin yeni adı:', ders.name);
+  if (!newName || !newName.trim()) return;
+  ders.name = newName.trim();
+  saveState();
+  render();
+}
+
+function addKonu(dersId, inputEl) {
+  const name = inputEl.value.trim();
+  if (!name) return;
+  const ders = state.dersler.find(d => d.id === dersId);
+  if (!ders) return;
+  if (ders.konular.includes(name)) {
+    alert('Bu konu zaten var.');
+    return;
+  }
+  ders.konular.push(name);
+  inputEl.value = '';
+  saveState();
+  render();
+  // odak korumak için
+  setTimeout(() => {
+    const el = document.querySelector(`[data-add-input="${dersId}"]`);
+    if (el) el.focus();
+  }, 50);
+}
+
+function deleteKonu(dersId, konuName) {
+  if (!confirm(`"${konuName}" konusunu silmek istediğine emin misin?`)) return;
+  const ders = state.dersler.find(d => d.id === dersId);
+  if (!ders) return;
+  ders.konular = ders.konular.filter(k => k !== konuName);
+  delete state.progress[dersId + '::' + konuName];
+  saveState();
+  render();
+}
+
+function renameKonu(dersId, konuName) {
+  const newName = prompt('Konunun yeni adı:', konuName);
+  if (!newName || !newName.trim() || newName.trim() === konuName) return;
+  const ders = state.dersler.find(d => d.id === dersId);
+  if (!ders) return;
+  const idx = ders.konular.indexOf(konuName);
+  if (idx === -1) return;
+  ders.konular[idx] = newName.trim();
+  // progress key migrate
+  const oldKey = dersId + '::' + konuName;
+  const newKey = dersId + '::' + newName.trim();
+  if (state.progress[oldKey]) {
+    state.progress[newKey] = state.progress[oldKey];
+    delete state.progress[oldKey];
+  }
+  saveState();
+  render();
+}
+
+// ============ UI ============
+const openDersler = new Set();
+
+function toggleDers(dersId) {
+  if (openDersler.has(dersId)) openDersler.delete(dersId);
+  else openDersler.add(dersId);
+  render();
+}
+
+function expandAll() {
+  for (const d of state.dersler) openDersler.add(d.id);
+  render();
+}
+
+function collapseAll() {
+  openDersler.clear();
+  render();
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function render() {
+  const overall = getOverallStats();
+  document.getElementById('overallFill').style.width = overall.percent + '%';
+  document.getElementById('overallText').textContent = `${overall.completed} / ${overall.total} konu tamamlandı`;
+  document.getElementById('overallPercent').textContent = '%' + overall.percent;
+
+  const list = document.getElementById('dersList');
+  list.classList.remove('loading');
+
+  if (!state.dersler.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#888;background:#fff;border-radius:12px;">Henüz ders eklenmemiş. "+ Ders Ekle" ile başlayabilirsin.</div>';
+    return;
+  }
+
+  let html = '';
+  for (const ders of state.dersler) {
+    const stats = getDersStats(ders);
+    const isOpen = openDersler.has(ders.id);
+    const isComplete = stats.percent === 100 && stats.total > 0;
+    html += `
+      <div class="ders ${isOpen?'open':''} ${isComplete?'complete':''}">
+        <div class="ders-header" onclick="toggleDers('${ders.id}')">
+          <span class="chevron">▶</span>
+          <span class="ders-name">${escapeHtml(ders.name)}</span>
+          <span class="ders-count">${stats.completed}/${stats.total}</span>
+          <div class="ders-progress" onclick="event.stopPropagation()">
+            <div class="ders-bar"><div class="ders-fill" style="width:${stats.percent}%"></div></div>
+            <span class="ders-percent">%${stats.percent}</span>
+          </div>
+        </div>
+        <div class="ders-body">
+          ${ders.konular.map(k => renderKonu(ders.id, k)).join('')}
+          <div class="add-konu">
+            <input type="text" placeholder="Yeni konu ekle..." data-add-input="${ders.id}"
+              onkeydown="if(event.key==='Enter'){addKonu('${ders.id}', this)}">
+            <button class="btn btn-sm" onclick="addKonu('${ders.id}', this.previousElementSibling)">Ekle</button>
+            <button class="btn btn-sm" onclick="renameDers('${ders.id}')" title="Dersi yeniden adlandır">✏️</button>
+            <button class="btn btn-sm" onclick="deleteDers('${ders.id}')" title="Dersi sil" style="color:#a32d2d">🗑</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  list.innerHTML = html;
+}
+
+function renderKonu(dersId, konuName) {
+  const p = getKonuProgress(dersId, konuName);
+  const allThree = p.dersDinlendi && p.soruCozuldu && p.yanlisIncelendi;
+  const escName = escapeHtml(konuName);
+  const escNameAttr = konuName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  return `
+    <div class="konu ${p.tamamlandi?'completed':''}">
+      <span class="konu-name">${escName}</span>
+      <div class="checkboxes">
+        <span class="check-pill ${p.dersDinlendi?'checked':''}" onclick="toggleCheck('${dersId}', '${escNameAttr}', 'dersDinlendi')">
+          <span class="ico">${p.dersDinlendi?'✓':'○'}</span> Ders dinlendi
+        </span>
+        <span class="check-pill ${p.soruCozuldu?'checked':''}" onclick="toggleCheck('${dersId}', '${escNameAttr}', 'soruCozuldu')">
+          <span class="ico">${p.soruCozuldu?'✓':'○'}</span> Soru çözüldü
+        </span>
+        <span class="check-pill ${p.yanlisIncelendi?'checked':''}" onclick="toggleCheck('${dersId}', '${escNameAttr}', 'yanlisIncelendi')">
+          <span class="ico">${p.yanlisIncelendi?'✓':'○'}</span> Yanlışlar incelendi
+        </span>
+        <button class="complete-btn ${p.tamamlandi?'done':(allThree?'ready':'')}"
+          ${(!allThree && !p.tamamlandi)?'disabled':''}
+          onclick="toggleComplete('${dersId}', '${escNameAttr}')">
+          ${p.tamamlandi?'✓ Tamamlandı':'Konuyu Tamamla'}
+        </button>
+      </div>
+      <div class="konu-actions">
+        <button class="icon-btn" onclick="renameKonu('${dersId}', '${escNameAttr}')" title="Yeniden adlandır">✏️</button>
+        <button class="icon-btn" onclick="deleteKonu('${dersId}', '${escNameAttr}')" title="Sil">🗑</button>
+      </div>
+    </div>
+  `;
+}
+
+// ============ EXPORT / RESET ============
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `kpss-yedek-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function confirmReset() {
+  document.getElementById('resetModal').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('resetModal').classList.remove('show');
+}
+async function doReset() {
+  state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  await saveState();
+  closeModal();
+  render();
+}
+
+// ============ REAL-TIME LISTENER ============
+function startListening() {
+  if (unsubscribe) unsubscribe();
+  unsubscribe = DOC_REF.onSnapshot((snap) => {
+    if (saving) return; // kendi kaydımızı geri okumayalım
+    if (!snap.exists) return;
+    const remote = snap.data();
+    const remoteHash = JSON.stringify(remote);
+    if (remoteHash !== lastSavedHash) {
+      state = remote;
+      mergeDefaults();
+      lastSavedHash = remoteHash;
+      render();
+    }
+  }, (err) => {
+    showStatus('⚠ Bağlantı koptu: ' + err.message, 4000);
+  });
+}
+
+// ============ PIN ============
+const CORRECT_PIN = '7362';
+
+function checkPin() {
+  const input = document.getElementById('pinInput');
+  const err = document.getElementById('pinError');
+  if (input.value === CORRECT_PIN) {
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('appContent').classList.add('unlocked');
+    initApp();
+  } else {
+    err.textContent = 'Şifre yanlış';
+    input.value = '';
+    input.focus();
+    setTimeout(() => { err.textContent = ''; }, 2000);
+  }
+}
+
+// ============ INIT ============
+async function initApp() {
+  await loadState();
+  render();
+  startListening();
+}
+
+// PIN ekranı event listener'ları
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('pinInput');
+  input.focus();
+  // Enter ile giriş
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') checkPin();
+  });
+  // 4 hane yazılınca otomatik dene
+  input.addEventListener('input', (e) => {
+    // sadece rakam kabul et
+    e.target.value = e.target.value.replace(/\D/g, '');
+    if (e.target.value.length === 4) {
+      setTimeout(checkPin, 100);
+    }
+  });
+});
+</script>
+
+</body>
+</html>
