@@ -30,9 +30,22 @@
     font-weight: 600;
     margin-bottom: 4px;
   }
+  .mini-title {
+    font-size: 12px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
   .subtitle {
     font-size: 13px;
     color: #666;
+  }
+  .overall-percent {
+    font-weight: 700;
+    color: #1a1a1a;
+    font-size: 15px;
   }
   .overall-progress {
     margin-top: 16px;
@@ -81,17 +94,31 @@
   }
   .btn-primary:hover { background: #333; }
   .btn-sm { padding: 4px 10px; font-size: 12px; }
-  .status-banner {
-    background: #fff8e1;
-    border: 1px solid #f0d97a;
-    border-radius: 8px;
-    padding: 10px 14px;
-    margin-bottom: 16px;
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1a1a1a;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 24px;
     font-size: 13px;
-    color: #6d5210;
-    display: none;
+    font-weight: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 150;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    max-width: calc(100% - 32px);
+    text-align: center;
   }
-  .status-banner.show { display: block; }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .toast.success { background: #1d9e75; }
+  .toast.error { background: #a32d2d; }
   .ders {
     background: #fff;
     border: 1px solid #e5e5e0;
@@ -206,7 +233,10 @@
   }
   .check-pill .ico { font-weight: 700; font-size: 12px; }
   .complete-btn {
-    padding: 5px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
     background: #ebebe5;
     border: 1px solid #d5d5d0;
     border-radius: 14px;
@@ -216,6 +246,7 @@
     font-family: inherit;
     transition: all 0.15s;
   }
+  .complete-btn .ico { font-weight: 700; font-size: 12px; }
   .complete-btn.ready {
     background: #1d9e75;
     border-color: #1d9e75;
@@ -256,6 +287,13 @@
     border-radius: 6px;
     font-family: inherit;
     font-size: 13px;
+  }
+  .ders-footer {
+    padding: 10px 16px;
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+    border-top: 1px solid #ebebe5;
   }
   .modal-overlay {
     position: fixed;
@@ -394,23 +432,22 @@
 <div class="app-content" id="appContent">
 
 <header>
-  <h1>📚 KPSS Genel Yetenek - Genel Kültür</h1>
+  <div class="mini-title">Sema Aktaş</div>
+  <h1>KPSS İlerleyiş Takibi</h1>
   <div class="overall-progress">
     <div class="overall-bar"><div class="overall-fill" id="overallFill" style="width:0%"></div></div>
     <div class="overall-stats">
+      <span id="overallPercent" class="overall-percent">%0</span>
       <span id="overallText">0 / 0 konu tamamlandı</span>
-      <span id="overallPercent">%0</span>
     </div>
   </div>
 </header>
 
-<div class="status-banner" id="statusBanner"></div>
-
 <div class="controls">
-  <button class="btn" onclick="expandAll()">Hepsini Aç</button>
-  <button class="btn" onclick="collapseAll()">Hepsini Kapat</button>
-  <button class="btn" onclick="addDers()">+ Ders Ekle</button>
+  <button class="btn" onclick="openAddKonuModal()">+ Konu Ekle</button>
   <button class="btn" onclick="exportData()">📥 Yedek Al</button>
+  <button class="btn" onclick="document.getElementById('importFile').click()">📤 Yedeği Yükle</button>
+  <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
   <button class="btn" onclick="confirmReset()" style="margin-left:auto; color:#a32d2d">Sıfırla</button>
 </div>
 
@@ -418,6 +455,20 @@
 
 <div class="footer-note">
   💑 Bu sayfayı ikiniz de aynı linkten açabilirsiniz. Tüm değişiklikler otomatik kaydedilir.
+</div>
+
+<div class="modal-overlay" id="addKonuModal">
+  <div class="modal">
+    <h3>Yeni Konu Ekle</h3>
+    <label style="font-size:13px; color:#555; display:block; margin-bottom:6px;">Ders</label>
+    <select id="addKonuDersSelect" style="width:100%; padding:10px; border:1px solid #d5d5d0; border-radius:8px; font-family:inherit; font-size:14px; background:#fff; margin-bottom:12px;"></select>
+    <label style="font-size:13px; color:#555; display:block; margin-bottom:6px;">Konu adı</label>
+    <input type="text" id="addKonuInput" placeholder="Konunun adı..." onkeydown="if(event.key==='Enter')submitAddKonu()" style="width:100%; padding:10px; border:1px solid #d5d5d0; border-radius:8px; font-family:inherit; font-size:14px; margin-bottom:16px;">
+    <div class="modal-actions">
+      <button class="btn" onclick="closeAddKonuModal()">Vazgeç</button>
+      <button class="btn btn-primary" onclick="submitAddKonu()">Ekle</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal-overlay" id="resetModal">
@@ -432,6 +483,8 @@
 </div>
 
 </div><!-- /app-content -->
+
+<div id="toast" class="toast"></div>
 
 <script>
 // ============ FIREBASE INIT ============
@@ -575,7 +628,7 @@ async function loadState() {
     }
     lastSavedHash = JSON.stringify(state);
   } catch (e) {
-    showStatus('⚠ Bağlantı hatası: ' + e.message, 4000);
+    showStatus('⚠ Bağlantı hatası: ' + e.message, 4000, 'error');
     state = JSON.parse(JSON.stringify(DEFAULT_DATA));
   }
 }
@@ -589,24 +642,28 @@ async function saveState() {
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
     saving = true;
-    showStatus('Kaydediliyor...');
     try {
       await DOC_REF.set(state);
       lastSavedHash = JSON.stringify(state);
-      showStatus('✓ Kaydedildi', 1500);
+      showStatus('✓ Kaydedildi', 1500, 'success');
     } catch (e) {
-      showStatus('⚠ Kayıt hatası: ' + e.message, 3000);
+      showStatus('⚠ Kayıt hatası: ' + e.message, 3000, 'error');
     }
     saving = false;
   }, 300);
 }
 
-function showStatus(msg, duration = 0) {
-  const banner = document.getElementById('statusBanner');
-  banner.textContent = msg;
-  banner.classList.add('show');
+let toastTimer = null;
+function showStatus(msg, duration = 1500, type = '') {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.className = 'toast show' + (type ? ' ' + type : '');
+  if (toastTimer) clearTimeout(toastTimer);
   if (duration) {
-    setTimeout(() => banner.classList.remove('show'), duration);
+    toastTimer = setTimeout(() => {
+      toast.classList.remove('show');
+    }, duration);
   }
 }
 
@@ -782,7 +839,7 @@ function render() {
   list.classList.remove('loading');
 
   if (!state.dersler.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:#888;background:#fff;border-radius:12px;">Henüz ders eklenmemiş. "+ Ders Ekle" ile başlayabilirsin.</div>';
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#888;background:#fff;border-radius:12px;">Henüz konu yok.</div>';
     return;
   }
 
@@ -804,12 +861,9 @@ function render() {
         </div>
         <div class="ders-body">
           ${ders.konular.map(k => renderKonu(ders.id, k)).join('')}
-          <div class="add-konu">
-            <input type="text" placeholder="Yeni konu ekle..." data-add-input="${ders.id}"
-              onkeydown="if(event.key==='Enter'){addKonu('${ders.id}', this)}">
-            <button class="btn btn-sm" onclick="addKonu('${ders.id}', this.previousElementSibling)">Ekle</button>
-            <button class="btn btn-sm" onclick="renameDers('${ders.id}')" title="Dersi yeniden adlandır">✏️</button>
-            <button class="btn btn-sm" onclick="deleteDers('${ders.id}')" title="Dersi sil" style="color:#a32d2d">🗑</button>
+          <div class="ders-footer">
+            <button class="btn btn-sm" onclick="renameDers('${ders.id}')" title="Dersi yeniden adlandır">✏️ Yeniden adlandır</button>
+            <button class="btn btn-sm" onclick="deleteDers('${ders.id}')" title="Dersi sil" style="color:#a32d2d">🗑 Dersi sil</button>
           </div>
         </div>
       </div>
@@ -839,7 +893,7 @@ function renderKonu(dersId, konuName) {
         <button class="complete-btn ${p.tamamlandi?'done':(allThree?'ready':'')}"
           ${(!allThree && !p.tamamlandi)?'disabled':''}
           onclick="toggleComplete('${dersId}', '${escNameAttr}')">
-          ${p.tamamlandi?'✓ Tamamlandı':'Konuyu Tamamla'}
+          <span class="ico">${p.tamamlandi?'✓':'○'}</span> ${p.tamamlandi?'Tamamlandı':'Konuyu Tamamla'}
         </button>
       </div>
       <div class="konu-actions">
@@ -850,7 +904,7 @@ function renderKonu(dersId, konuName) {
   `;
 }
 
-// ============ EXPORT / RESET ============
+// ============ EXPORT / IMPORT / RESET ============
 function exportData() {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -859,6 +913,70 @@ function exportData() {
   a.download = `kpss-yedek-${new Date().toISOString().split('T')[0]}.json`;
   a.click();
   URL.revokeObjectURL(url);
+  showStatus('Yedek indirildi', 1500, 'success');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!imported.dersler || !Array.isArray(imported.dersler)) {
+        throw new Error('Geçersiz yedek dosyası');
+      }
+      if (!confirm('Mevcut ilerleyiş yedekteki ile değiştirilecek. Devam edilsin mi?')) {
+        event.target.value = '';
+        return;
+      }
+      state = imported;
+      mergeDefaults();
+      await saveState();
+      render();
+      showStatus('Yedek yüklendi', 1800, 'success');
+    } catch (err) {
+      showStatus('⚠ Hata: ' + err.message, 3000, 'error');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ============ KONU EKLE MODAL ============
+function openAddKonuModal() {
+  const select = document.getElementById('addKonuDersSelect');
+  select.innerHTML = state.dersler.map(d =>
+    `<option value="${d.id}">${escapeHtml(d.name)}</option>`
+  ).join('');
+  document.getElementById('addKonuInput').value = '';
+  document.getElementById('addKonuModal').classList.add('show');
+  setTimeout(() => document.getElementById('addKonuInput').focus(), 100);
+}
+
+function closeAddKonuModal() {
+  document.getElementById('addKonuModal').classList.remove('show');
+}
+
+function submitAddKonu() {
+  const dersId = document.getElementById('addKonuDersSelect').value;
+  const name = document.getElementById('addKonuInput').value.trim();
+  if (!name) {
+    showStatus('Konu adı boş olamaz', 1800, 'error');
+    return;
+  }
+  const ders = state.dersler.find(d => d.id === dersId);
+  if (!ders) return;
+  if (ders.konular.includes(name)) {
+    showStatus('Bu konu zaten var', 1800, 'error');
+    return;
+  }
+  ders.konular.push(name);
+  openDersler.add(dersId);
+  saveState();
+  render();
+  closeAddKonuModal();
+  showStatus(`"${name}" eklendi`, 1500, 'success');
 }
 
 function confirmReset() {
@@ -889,7 +1007,7 @@ function startListening() {
       render();
     }
   }, (err) => {
-    showStatus('⚠ Bağlantı koptu: ' + err.message, 4000);
+    showStatus('⚠ Bağlantı koptu: ' + err.message, 4000, 'error');
   });
 }
 
